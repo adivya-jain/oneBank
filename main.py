@@ -3,16 +3,12 @@ import os
 import re
 from datetime import datetime
 from dateutil import parser
-INPUT_DIR = "data"
-OUTPUT_PATH = "output/standardized_output18.csv"
-
-# ------------------------
-# Helpers
-# ------------------------
+INPUT_DIR = "data" 
+OUTPUT_PATH = "output/ICICI1-Output-Case2.csv" # Change the Output file name as needed 
 
 def parse_amount(value):
     if pd.isna(value) or str(value).strip() == "":
-        return 0, 0, "INR"  # return debit, credit, currency
+        return 0, 0, "INR"
 
     value_str = str(value).strip().lower()
     parts = value_str.split()
@@ -32,9 +28,8 @@ def parse_amount(value):
     return (0 if is_credit else amt), (amt if is_credit else 0), "INR"
 
 def normalize_date(value):
-    print(f"Normalizing date: {value}")
     try:
-        dt = parser.parse(str(value), dayfirst=True)  # Day comes first for Indian-style dates
+        dt = parser.parse(str(value), dayfirst=True) 
         return dt.strftime("%d-%m-%Y")
     except Exception as e:
         return None
@@ -79,9 +74,6 @@ def detect_header_row(df):
 
     return header_index
 
-# ------------------------
-# Main Logic
-# ------------------------
 
 def process_files():
     records = []
@@ -130,7 +122,7 @@ def process_files():
 
             date = None
             description = ""
-            debit, credit = 0, 0
+            debit, credit = 0.0, 0.0
             currency = "INR"
 
             for col in df.columns:
@@ -193,10 +185,9 @@ def process_files():
                 })
 
         df_final = pd.DataFrame(records)
-
-        # Optional: Drop rows with invalid or missing dates (if any)
+        df_final["Debit"] = pd.to_numeric(df_final["Debit"], errors="coerce").fillna(0.0)
+        df_final["Credit"] = pd.to_numeric(df_final["Credit"], errors="coerce").fillna(0.0)
         df_final = df_final[df_final['Date'].notnull()]
-
         os.makedirs("output", exist_ok=True)
         df_final.to_csv(OUTPUT_PATH, index=False)
         print(f"\n✅ Output written to: {OUTPUT_PATH}")
